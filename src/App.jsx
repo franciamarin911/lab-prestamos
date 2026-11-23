@@ -1,13 +1,61 @@
-import { db } from './firebase'
+import { useState } from 'react'
+import Inventario from './components/Inventario'
 
 export default function App() {
-  console.log('Firestore conectado:', db.type)
+  const [pestana, setPestana] = useState('inventario')
+  const [toast, setToast] = useState(null)
+
+  // Muestra un aviso (toast) durante 3 segundos
+  function notificar(mensaje, tipo = 'exito') {
+    setToast({ mensaje, tipo })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const botonPestana = (id) =>
+    `rounded-lg px-4 py-2 font-semibold ${
+      pestana === id
+        ? 'bg-emerald-600 text-white'
+        : 'text-slate-300 hover:bg-slate-800'
+    }`
+
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-emerald-400">
-        Tailwind funciona ✔
-      </h1>
-      <p className="mt-2 text-slate-300">Revisa la consola del navegador (F12).</p>
+    <div className="mx-auto max-w-6xl p-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold">Control de Préstamos de Laboratorio</h1>
+        <p className="text-slate-400">Panel del Administrador</p>
+      </header>
+
+      <nav className="mb-6 flex gap-2">
+        <button
+          className={botonPestana('prestamos')}
+          onClick={() => setPestana('prestamos')}
+        >
+          Préstamos
+        </button>
+        <button
+          className={botonPestana('inventario')}
+          onClick={() => setPestana('inventario')}
+        >
+          Inventario
+        </button>
+      </nav>
+
+      {pestana === 'prestamos' && (
+        <p className="text-slate-400">
+          El módulo de préstamos se construirá en el siguiente paso.
+        </p>
+      )}
+      {pestana === 'inventario' && <Inventario notificar={notificar} />}
+
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 rounded-xl px-5 py-3 font-semibold text-white shadow-lg ${
+            toast.tipo === 'error' ? 'bg-red-600' : 'bg-emerald-600'
+          }`}
+        >
+          {toast.mensaje}
+        </div>
+      )}
     </div>
   )
 }
