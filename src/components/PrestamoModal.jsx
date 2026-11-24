@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import {
+  validarEstudiante,
+  validarCantidad,
+  mensajeError,
+} from '../utils/validaciones'
 
 // Sirve para dos casos:
 // - Crear: "prestamo" es null y se elige equipo y cantidad.
@@ -30,32 +35,37 @@ export default function PrestamoModal({
     e.preventDefault()
     setError('')
 
-    if (!form.estudiante.trim() || !form.codigoEstudiante.trim()) {
-      setError('El nombre y el código del estudiante son obligatorios.')
+    const errorEstudiante = validarEstudiante(form)
+    if (errorEstudiante) {
+      setError(errorEstudiante)
       return
     }
 
     if (!editando) {
-      if (!form.equipoId) {
-        setError('Debes seleccionar un equipo.')
+      if (!form.equipoId || !equipoElegido) {
+        setError('Debes seleccionar un equipo disponible.')
         return
       }
-      const cantidad = Number(form.cantidad)
-      if (!Number.isInteger(cantidad) || cantidad < 1) {
-        setError('La cantidad debe ser un número entero mayor a 0.')
+      const errorCantidad = validarCantidad(
+        form.cantidad,
+        equipoElegido.stockDisponible,
+      )
+      if (errorCantidad) {
+        setError(errorCantidad)
         return
       }
-      if (equipoElegido && cantidad > equipoElegido.stockDisponible) {
-        setError(`Solo hay ${equipoElegido.stockDisponible} unidad(es) disponible(s).`)
-        return
-      }
+    }
+
+    if (!navigator.onLine) {
+      setError('Sin conexión a internet. Conéctate e inténtalo de nuevo.')
+      return
     }
 
     setGuardando(true)
     try {
       await onGuardar(form)
     } catch (err) {
-      setError(err.message)
+      setError(mensajeError(err))
       setGuardando(false)
     }
   }
@@ -79,20 +89,27 @@ export default function PrestamoModal({
           </label>
           <input
             className={campo}
+            maxLength={60}
             value={form.estudiante}
-            onChange={(e) => cambiar('estudiante', e.target.value)}
+            onChange={(e) =>
+              cambiar('estudiante', e.target.value.replace(/[^\p{L}\s'-]/gu, ''))
+            }
             placeholder="Ej. Juan Pérez Mamani"
           />
         </div>
 
         <div>
           <label className="mb-1 block text-sm text-slate-400">
-            Matrícula o CI
+            CI (solo números)
           </label>
           <input
             className={campo}
+            inputMode="numeric"
+            maxLength={10}
             value={form.codigoEstudiante}
-            onChange={(e) => cambiar('codigoEstudiante', e.target.value)}
+            onChange={(e) =>
+              cambiar('codigoEstudiante', e.target.value.replace(/\D/g, ''))
+            }
             placeholder="Ej. 1234567"
           />
         </div>
@@ -109,7 +126,9 @@ export default function PrestamoModal({
             <select
               className={campo}
               value={form.equipoId}
-              onChange={(e) => setForm({ ...form, equipoId: e.target.value, cantidad: 1 })}
+              onChange={(e) =>
+                setForm({ ...form, equipoId: e.target.value, cantidad: 1 })
+              }
             >
               {equiposDisponibles.map((eq) => (
                 <option key={eq.id} value={eq.id}>
@@ -125,6 +144,7 @@ export default function PrestamoModal({
           <input
             type="number"
             min="1"
+            step="1"
             max={equipoElegido?.stockDisponible}
             className={campo}
             value={form.cantidad}
