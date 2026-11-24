@@ -10,6 +10,11 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { calcularEstado } from './equiposService'
+import {
+  validarEstudiante,
+  validarCantidad,
+  limpiarEspacios,
+} from '../utils/validaciones'
 
 // Referencia a la colección "prestamos" en Firestore
 const prestamosRef = collection(db, 'prestamos')
@@ -46,6 +51,13 @@ export function suscribirPrestamos(alCambiar, alFallar) {
 
 // CREATE: registra el préstamo y descuenta stock en una sola transacción
 export async function crearPrestamo(datos) {
+  // Validación de datos (se repite aquí por seguridad, aunque el formulario ya la hizo)
+  const errorEstudiante = validarEstudiante(datos)
+  if (errorEstudiante) throw new Error(errorEstudiante)
+  const errorCantidad = validarCantidad(datos.cantidad)
+  if (errorCantidad) throw new Error(errorCantidad)
+  if (!datos.equipoId) throw new Error('Debes seleccionar un equipo.')
+
   const cantidad = Number(datos.cantidad)
   const equipoRef = doc(db, 'equipos', datos.equipoId)
   const prestamoRef = doc(prestamosRef) // genera un ID nuevo
@@ -75,8 +87,8 @@ export async function crearPrestamo(datos) {
       estado: calcularEstado(nuevoDisponible, false),
     })
     tx.set(prestamoRef, {
-      estudiante: datos.estudiante.trim(),
-      codigoEstudiante: datos.codigoEstudiante.trim(),
+      estudiante: limpiarEspacios(datos.estudiante),
+      codigoEstudiante: String(datos.codigoEstudiante).trim(),
       equipoId: datos.equipoId,
       equipoNombre: equipo.nombre,
       cantidad,
@@ -118,9 +130,12 @@ export async function devolverPrestamo(prestamo) {
 // UPDATE (corrección): solo los datos del estudiante.
 // Equipo y cantidad no se editan para no desajustar el stock.
 export async function actualizarPrestamo(id, datos) {
+  const errorEstudiante = validarEstudiante(datos)
+  if (errorEstudiante) throw new Error(errorEstudiante)
+
   await updateDoc(doc(db, 'prestamos', id), {
-    estudiante: datos.estudiante.trim(),
-    codigoEstudiante: datos.codigoEstudiante.trim(),
+    estudiante: limpiarEspacios(datos.estudiante),
+    codigoEstudiante: String(datos.codigoEstudiante).trim(),
   })
 }
 
