@@ -4,14 +4,22 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDocs,
+  where,
   onSnapshot,
   query,
   orderBy,
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import {
+  validarEquipo,
+  limpiarEspacios,
+  normalizarCodigo,
+} from '../utils/validaciones'
 
-// Referencia a la colección "equipos" en Firestore
+// Referencias a las colecciones en Firestore
 const equiposRef = collection(db, 'equipos')
+const prestamosRef = collection(db, 'prestamos')
 
 // Calcula el estado según el stock y si está en mantenimiento
 export function calcularEstado(stockDisponible, enMantenimiento) {
@@ -35,10 +43,13 @@ export function suscribirEquipos(alCambiar, alFallar) {
 
 // CREATE: un equipo nuevo empieza con todo su stock disponible
 export async function crearEquipo(datos) {
+  const errorValidacion = validarEquipo(datos)
+  if (errorValidacion) throw new Error(errorValidacion)
+
   const stockTotal = Number(datos.stockTotal)
   await addDoc(equiposRef, {
-    nombre: datos.nombre.trim(),
-    codigo: datos.codigo.trim(),
+    nombre: limpiarEspacios(datos.nombre),
+    codigo: normalizarCodigo(datos.codigo),
     categoria: datos.categoria,
     stockTotal,
     stockDisponible: stockTotal,
@@ -48,6 +59,9 @@ export async function crearEquipo(datos) {
 
 // UPDATE: respeta las unidades que están prestadas actualmente
 export async function actualizarEquipo(equipoActual, datos) {
+  const errorValidacion = validarEquipo(datos)
+  if (errorValidacion) throw new Error(errorValidacion)
+
   const nuevoTotal = Number(datos.stockTotal)
   const prestadas = equipoActual.stockTotal - equipoActual.stockDisponible
 
@@ -60,8 +74,8 @@ export async function actualizarEquipo(equipoActual, datos) {
   const nuevoDisponible = nuevoTotal - prestadas
 
   await updateDoc(doc(db, 'equipos', equipoActual.id), {
-    nombre: datos.nombre.trim(),
-    codigo: datos.codigo.trim(),
+    nombre: limpiarEspacios(datos.nombre),
+    codigo: normalizarCodigo(datos.codigo),
     categoria: datos.categoria,
     stockTotal: nuevoTotal,
     stockDisponible: nuevoDisponible,
@@ -69,7 +83,19 @@ export async function actualizarEquipo(equipoActual, datos) {
   })
 }
 
-// DELETE
+// DELETE: no se puede dar de baja un equipo con préstamos pendientes
 export async function eliminarEquipo(id) {
+  const pendientes = await getDocs(
+    query(
+      prestamosRef,
+      where('equipoId', '==', id),
+      where('estado', '==', 'Pendiente'),
+    ),
+  )
+  if (!pendientes.empty) {
+    throw new Error(
+      `No se puede eliminar: tiene ${pendientes.size} préstamo(s) pendiente(s). Registra primero la devolución.`,
+    )
+  }
   await deleteDoc(doc(db, 'equipos', id))
 }
