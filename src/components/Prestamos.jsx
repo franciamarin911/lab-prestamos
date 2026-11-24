@@ -154,7 +154,7 @@ export default function Prestamos({ notificar }) {
           <thead className="bg-slate-900 text-slate-400">
             <tr>
               <th className="px-4 py-3">Estudiante</th>
-              <th className="px-4 py-3">Matrícula / CI</th>
+              <th className="px-4 py-3">CI</th>
               <th className="px-4 py-3">Equipo</th>
               <th className="px-4 py-3">Cant.</th>
               <th className="px-4 py-3">Fecha</th>
