@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CATEGORIAS } from '../constants'
+import { validarEquipo, mensajeError } from '../utils/validaciones'
 
 export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
   // Si recibe un "equipo" estamos editando; si no, estamos creando
@@ -21,13 +22,13 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
     e.preventDefault()
     setError('')
 
-    if (!form.nombre.trim() || !form.codigo.trim()) {
-      setError('El nombre y el código son obligatorios.')
+    const mensaje = validarEquipo(form)
+    if (mensaje) {
+      setError(mensaje)
       return
     }
-    const total = Number(form.stockTotal)
-    if (!Number.isInteger(total) || total < 0) {
-      setError('El stock total debe ser un número entero mayor o igual a 0.')
+    if (!navigator.onLine) {
+      setError('Sin conexión a internet. Conéctate e inténtalo de nuevo.')
       return
     }
 
@@ -35,7 +36,7 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
     try {
       await onGuardar(form)
     } catch (err) {
-      setError(err.message)
+      setError(mensajeError(err))
       setGuardando(false)
     }
   }
@@ -57,6 +58,7 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
           <label className="mb-1 block text-sm text-slate-400">Nombre</label>
           <input
             className={campo}
+            maxLength={60}
             value={form.nombre}
             onChange={(e) => cambiar('nombre', e.target.value)}
             placeholder="Ej. Sensor HC-SR04"
@@ -64,11 +66,16 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm text-slate-400">Código</label>
+          <label className="mb-1 block text-sm text-slate-400">
+            Código (letras, números y guiones)
+          </label>
           <input
             className={campo}
+            maxLength={20}
             value={form.codigo}
-            onChange={(e) => cambiar('codigo', e.target.value)}
+            onChange={(e) =>
+              cambiar('codigo', e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))
+            }
             placeholder="Ej. LAB-SEN-01"
           />
         </div>
@@ -93,6 +100,8 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
           <input
             type="number"
             min="0"
+            max="9999"
+            step="1"
             className={campo}
             value={form.stockTotal}
             onChange={(e) => cambiar('stockTotal', e.target.value)}
