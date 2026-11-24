@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import Inventario from './components/Inventario'
+import Prestamos from './components/Prestamos'
 
 export default function App() {
-  const [pestana, setPestana] = useState('inventario')
+  const [pestana, setPestana] = useState('prestamos')
   const [toast, setToast] = useState(null)
 
   // Muestra un aviso (toast) durante 3 segundos
@@ -40,11 +41,7 @@ export default function App() {
         </button>
       </nav>
 
-      {pestana === 'prestamos' && (
-        <p className="text-slate-400">
-          El módulo de préstamos se construirá en el siguiente paso.
-        </p>
-      )}
+      {pestana === 'prestamos' && <Prestamos notificar={notificar} />}
       {pestana === 'inventario' && <Inventario notificar={notificar} />}
 
       {toast && (
