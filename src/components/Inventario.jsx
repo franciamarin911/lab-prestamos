@@ -7,6 +7,7 @@ import {
 } from '../services/equiposService'
 import { CATEGORIAS, ESTADOS_EQUIPO } from '../constants'
 import EquipoModal from './EquipoModal'
+import { mensajeError } from '../utils/validaciones'
 
 const colorEstado = {
   Disponible: 'bg-emerald-500/20 text-emerald-300',
@@ -95,7 +96,7 @@ export default function Inventario({ notificar }) {
       notificar('Equipo eliminado')
     } catch (err) {
       console.error(err)
-      notificar('No se pudo eliminar el equipo', 'error')
+      notificar(mensajeError(err), 'error')
     }
     setEquipoAEliminar(null)
   }
