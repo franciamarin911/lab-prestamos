@@ -122,4 +122,4 @@ export function mensajeError(err) {
   }
   if (err?.code && porCodigo[err.code]) return porCodigo[err.code]
   return err?.message || 'Ocurrió un error inesperado.'
-}
+}   
