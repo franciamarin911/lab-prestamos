@@ -11,6 +11,7 @@ import {
   orderBy,
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import { PREFIJOS } from '../constants'
 import {
   validarEquipo,
   limpiarEspacios,
@@ -27,6 +28,32 @@ export function calcularEstado(stockDisponible, enMantenimiento) {
   return stockDisponible > 0 ? 'Disponible' : 'Agotado'
 }
 
+// Busca el número más alto usado con un prefijo (ej. MICRO-014 -> 14)
+export async function ultimoNumero(prefijo) {
+  const snap = await getDocs(
+    query(
+      equiposRef,
+      where('codigo', '>=', `${prefijo}-`),
+      where('codigo', '<=', `${prefijo}-\uf8ff`),
+    ),
+  )
+  const patron = new RegExp(`^${prefijo}-(\\d+)$`)
+  let maximo = 0
+  snap.forEach((d) => {
+    const m = patron.exec(String(d.data().codigo ?? ''))
+    if (m) maximo = Math.max(maximo, Number(m[1]))
+  })
+  return maximo
+}
+
+// Genera el siguiente código de la categoría: MICRO-001, MICRO-002, ...
+export async function generarCodigo(categoria) {
+  const prefijo = PREFIJOS[categoria]
+  if (!prefijo) throw new Error('Categoría no válida.')
+  const siguiente = (await ultimoNumero(prefijo)) + 1
+  return `${prefijo}-${String(siguiente).padStart(3, '0')}`
+}
+
 // READ en tiempo real: avisa cada vez que algo cambia en la nube.
 // Devuelve una función para cancelar la escucha.
 export function suscribirEquipos(alCambiar, alFallar) {
@@ -41,25 +68,33 @@ export function suscribirEquipos(alCambiar, alFallar) {
   )
 }
 
-// CREATE: un equipo nuevo empieza con todo su stock disponible
+// CREATE: el código se genera solo; un equipo nuevo empieza con todo su stock disponible
 export async function crearEquipo(datos) {
-  const errorValidacion = validarEquipo(datos)
+  const codigo = await generarCodigo(datos.categoria)
+  const errorValidacion = validarEquipo({ ...datos, codigo })
   if (errorValidacion) throw new Error(errorValidacion)
 
   const stockTotal = Number(datos.stockTotal)
   await addDoc(equiposRef, {
     nombre: limpiarEspacios(datos.nombre),
-    codigo: normalizarCodigo(datos.codigo),
+    codigo,
     categoria: datos.categoria,
     stockTotal,
     stockDisponible: stockTotal,
     estado: calcularEstado(stockTotal, datos.enMantenimiento),
+    fotoUrl: datos.fotoUrl || '',
   })
 }
 
-// UPDATE: respeta las unidades que están prestadas actualmente
+// UPDATE: respeta las unidades que están prestadas actualmente.
+// Si cambia la categoría, el equipo recibe un código nuevo de esa categoría.
 export async function actualizarEquipo(equipoActual, datos) {
-  const errorValidacion = validarEquipo(datos)
+  const cambioCategoria = datos.categoria !== equipoActual.categoria
+  const codigo = cambioCategoria
+    ? await generarCodigo(datos.categoria)
+    : normalizarCodigo(equipoActual.codigo)
+
+  const errorValidacion = validarEquipo({ ...datos, codigo })
   if (errorValidacion) throw new Error(errorValidacion)
 
   const nuevoTotal = Number(datos.stockTotal)
@@ -75,11 +110,12 @@ export async function actualizarEquipo(equipoActual, datos) {
 
   await updateDoc(doc(db, 'equipos', equipoActual.id), {
     nombre: limpiarEspacios(datos.nombre),
-    codigo: normalizarCodigo(datos.codigo),
+    codigo,
     categoria: datos.categoria,
     stockTotal: nuevoTotal,
     stockDisponible: nuevoDisponible,
     estado: calcularEstado(nuevoDisponible, datos.enMantenimiento),
+    fotoUrl: datos.fotoUrl || '',
   })
 }
 
