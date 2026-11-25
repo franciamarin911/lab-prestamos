@@ -72,7 +72,7 @@ export function validarNombreEquipo(valor) {
   if (!nombre) return 'El nombre del equipo es obligatorio.'
   if (nombre.length < 3) return 'El nombre del equipo es demasiado corto.'
   if (nombre.length > 60) return 'El nombre del equipo no puede superar 60 caracteres.'
-  if (!/^[\p{L}\p{N}][\p{L}\p{N} .,\-_/+()#]*$/u.test(nombre)) {
+  if (!/^[\p{L}\p{N}][\p{L}\p{N} .,\-_/+()#"]*$/u.test(nombre)) {
     return 'El nombre del equipo contiene caracteres no permitidos.'
   }
   return ''
@@ -85,7 +85,7 @@ export function validarCodigoEquipo(valor) {
     return 'El código debe tener entre 3 y 20 caracteres.'
   }
   if (!/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/.test(codigo)) {
-    return 'El código solo puede tener letras, números y guiones (ej. LAB-ARD-01).'
+    return 'El código solo puede tener letras, números y guiones (ej. MICRO-001).'
   }
   return ''
 }
@@ -100,14 +100,30 @@ export function validarStock(valor) {
   return ''
 }
 
+export function validarCategoria(valor) {
+  return CATEGORIAS.includes(valor) ? '' : 'Selecciona una categoría válida.'
+}
+
 export function validarEquipo(datos) {
-  if (!CATEGORIAS.includes(datos.categoria)) return 'Selecciona una categoría válida.'
   return (
+    validarCategoria(datos.categoria) ||
     validarNombreEquipo(datos.nombre) ||
     validarCodigoEquipo(datos.codigo) ||
     validarStock(datos.stockTotal) ||
     ''
   )
+}
+
+// ---------- Foto del equipo (opcional) ----------
+export function validarFoto(archivo) {
+  if (!archivo) return 'Selecciona una imagen.'
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
+    return 'Formato no permitido. Usa JPG, PNG o WEBP.'
+  }
+  if (archivo.size > 8 * 1024 * 1024) {
+    return 'La imagen no puede superar 8 MB.'
+  }
+  return ''
 }
 
 // ---------- Mensajes de error de Firebase en lenguaje claro ----------
@@ -122,4 +138,4 @@ export function mensajeError(err) {
   }
   if (err?.code && porCodigo[err.code]) return porCodigo[err.code]
   return err?.message || 'Ocurrió un error inesperado.'
-}   
+}
