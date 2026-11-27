@@ -261,7 +261,7 @@ export default function Inventario({ notificar }) {
       {/* Barra de herramientas (al cambiar de página se sube hasta aquí) */}
       <div id="lista-inventario" className="mb-6 grid scroll-mt-28 grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
         <div className="relative sm:col-span-2 lg:min-w-64 lg:flex-1">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="pointer-events-none absolute z-10 left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             className={entrada(false, { relleno: 'pl-10 pr-3.5' })}
             placeholder="Buscar por nombre o código…"
