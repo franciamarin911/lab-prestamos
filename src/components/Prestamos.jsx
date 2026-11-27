@@ -183,7 +183,7 @@ export default function Prestamos({ notificar }) {
       {/* Barra de herramientas (al cambiar de página se sube hasta aquí) */}
       <div id="lista-prestamos" className="mb-6 grid scroll-mt-28 gap-3 lg:flex lg:flex-wrap lg:items-center">
         <div className="relative lg:min-w-64 lg:flex-1">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="pointer-events-none absolute z-10 left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             className={entrada(false, { relleno: 'pl-10 pr-3.5' })}
             placeholder="Buscar por estudiante, CI o equipo…"
