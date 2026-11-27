@@ -113,7 +113,7 @@ export default function PrestamoModal({
               autoFocus
             />
           </Campo>
-          <Campo id="pr-ci" etiqueta="CI (solo números)" error={errores.codigoEstudiante}>
+          <Campo id="pr-ci" etiqueta="CI" error={errores.codigoEstudiante}>
             <input
               id="pr-ci"
               className={entrada(errores.codigoEstudiante)}
