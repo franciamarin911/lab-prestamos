@@ -9,8 +9,21 @@ import {
 } from '../utils/validaciones'
 import Modal from './ui/Modal'
 import Campo from './ui/Campo'
+import Selector from './ui/Selector'
 import SubirFoto from './ui/SubirFoto'
+import { CATEGORIAS_UI } from './ui/FotoEquipo'
 import { btnPrimario, btnSecundario, entrada } from './ui/estilos'
+
+const OPCIONES_CATEGORIA = CATEGORIAS.map((c) => ({
+  valor: c,
+  etiqueta: c,
+  descripcion: `Código ${PREFIJOS[c]}-001, ${PREFIJOS[c]}-002…`,
+  Icono: CATEGORIAS_UI[c]?.Icono,
+  color: CATEGORIAS_UI[c]?.color,
+}))
+
+const botonStock =
+  'hover-grad rounded-xl border border-white/10 bg-white/5 px-3 text-slate-300 transition hover:border-emerald-400/40 hover:text-white'
 
 export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
   // Si recibe un "equipo" estamos editando; si no, estamos creando
@@ -74,7 +87,7 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
       onCerrar={onCerrar}
       bloquear={guardando}
     >
-      <form onSubmit={enviar} className="space-y-5 px-6 py-5" noValidate>
+      <form onSubmit={enviar} className="space-y-5 px-6 pb-0 pt-5" noValidate>
         <Campo id="eq-nombre" etiqueta="Nombre" error={errores.nombre} contador={`${form.nombre.length}/60`}>
           <input
             id="eq-nombre"
@@ -100,28 +113,19 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
                   : `Código: ${prefijo}-001, ${prefijo}-002…`
             }
           >
-            <select
+            <Selector
               id="eq-categoria"
-              className={entrada(errores.categoria)}
-              value={form.categoria}
-              onChange={(e) => cambiar('categoria', e.target.value)}
-            >
-              {CATEGORIAS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              etiqueta="Categoría"
+              valor={form.categoria}
+              opciones={OPCIONES_CATEGORIA}
+              onCambio={(v) => cambiar('categoria', v)}
+              error={errores.categoria}
+            />
           </Campo>
 
           <Campo id="eq-stock" etiqueta="Stock total" error={errores.stockTotal}>
             <div className="flex items-stretch gap-2">
-              <button
-                type="button"
-                onClick={() => ajustarStock(-1)}
-                aria-label="Restar una unidad"
-                className="rounded-xl border border-slate-700 bg-slate-800/60 px-3 text-slate-300 transition hover:bg-slate-800"
-              >
+              <button type="button" onClick={() => ajustarStock(-1)} aria-label="Restar una unidad" className={botonStock}>
                 <Minus size={16} />
               </button>
               <input
@@ -134,12 +138,7 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
                 value={form.stockTotal}
                 onChange={(e) => cambiar('stockTotal', e.target.value)}
               />
-              <button
-                type="button"
-                onClick={() => ajustarStock(1)}
-                aria-label="Sumar una unidad"
-                className="rounded-xl border border-slate-700 bg-slate-800/60 px-3 text-slate-300 transition hover:bg-slate-800"
-              >
+              <button type="button" onClick={() => ajustarStock(1)} aria-label="Sumar una unidad" className={botonStock}>
                 <Plus size={16} />
               </button>
             </div>
@@ -155,7 +154,7 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
         </Campo>
 
         {/* Interruptor de mantenimiento */}
-        <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-800/30 px-4 py-3">
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
           <div>
             <p className="text-sm font-medium text-slate-200">En mantenimiento</p>
             <p className="text-xs text-slate-500">No se podrá prestar mientras esté activo.</p>
@@ -164,14 +163,15 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
             type="button"
             role="switch"
             aria-checked={form.enMantenimiento}
+            aria-label="En mantenimiento"
             onClick={() => cambiar('enMantenimiento', !form.enMantenimiento)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-              form.enMantenimiento ? 'bg-emerald-500' : 'bg-slate-700'
+            className={`relative h-7 w-12 shrink-0 rounded-full transition-colors duration-300 ${
+              form.enMantenimiento ? 'bg-linear-to-r from-emerald-500 to-sky-500' : 'bg-white/10'
             }`}
           >
             <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
-                form.enMantenimiento ? 'left-5.5' : 'left-0.5'
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all duration-300 ${
+                form.enMantenimiento ? 'left-6' : 'left-1'
               }`}
             />
           </button>
@@ -183,7 +183,8 @@ export default function EquipoModal({ equipo, onCerrar, onGuardar }) {
           </p>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
+        {/* Barra de acciones: siempre visible al final de la ventana */}
+        <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-white/10 bg-slate-900/90 px-6 py-4 backdrop-blur">
           <button type="button" onClick={onCerrar} disabled={guardando} className={btnSecundario}>
             Cancelar
           </button>

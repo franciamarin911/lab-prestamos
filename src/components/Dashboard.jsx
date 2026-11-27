@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Boxes, ClipboardList, PackageCheck, PackageX } from 'lucide-react'
 import { suscribirEquipos } from '../services/equiposService'
 import { suscribirPrestamos } from '../services/prestamosService'
+import Inclinable from './ui/Inclinable'
 import { tarjeta } from './ui/estilos'
 
 // Anima un número desde su valor anterior hasta el nuevo
@@ -28,23 +29,22 @@ function useContador(objetivo, duracion = 700) {
 function Tarjeta({ titulo, valor, detalle, Icono, cargando, indice, color }) {
   const animado = useContador(cargando ? 0 : valor)
   return (
-    <div
-      className={`${tarjeta} anim-slide-up group relative overflow-hidden p-5 transition hover:-translate-y-1 hover:border-slate-700`}
-      style={{ animationDelay: `${indice * 70}ms` }}
-    >
-      <div className={`absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-20 blur-2xl ${color.brillo}`} />
-      <div className="flex items-start justify-between">
-        <p className="text-sm font-medium text-slate-400">{titulo}</p>
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color.icono}`}>
-          <Icono size={20} />
+    <div className="anim-slide-up" style={{ animationDelay: `${indice * 80}ms` }}>
+      <Inclinable className={`${tarjeta} group relative h-full overflow-hidden p-4 sm:p-5`}>
+        <div className={`absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-25 blur-2xl transition-opacity duration-500 group-hover:opacity-50 ${color.brillo}`} />
+        <div className="relative flex items-start justify-between gap-2">
+          <p className="text-xs font-medium text-slate-400 sm:text-sm">{titulo}</p>
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10 ${color.icono}`}>
+            <Icono size={19} />
+          </div>
         </div>
-      </div>
-      {cargando ? (
-        <div className="skeleton mt-3 h-9 w-20 rounded-lg" />
-      ) : (
-        <p className={`mt-2 text-4xl font-extrabold tabular-nums ${color.texto}`}>{animado}</p>
-      )}
-      <p className="mt-1 text-xs text-slate-500">{cargando ? 'Cargando…' : detalle}</p>
+        {cargando ? (
+          <div className="skeleton relative mt-3 h-9 w-20 rounded-lg" />
+        ) : (
+          <p className={`relative mt-2 text-3xl font-extrabold tabular-nums sm:text-4xl ${color.texto}`}>{animado}</p>
+        )}
+        <p className="relative mt-1 text-xs text-slate-500">{cargando ? 'Cargando…' : detalle}</p>
+      </Inclinable>
     </div>
   )
 }
@@ -116,13 +116,13 @@ export default function Dashboard() {
   ]
 
   return (
-    <section className="mb-8">
+    <section className="mb-10">
       {error && (
         <p className="mb-3 rounded-xl bg-red-500/15 px-4 py-2.5 text-sm text-red-300">
           No se pudieron cargar las métricas. Revisa tu conexión y las reglas de Firestore.
         </p>
       )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {tarjetas.map((t, i) => (
           <Tarjeta key={t.titulo} {...t} cargando={cargando} indice={i} />
         ))}
@@ -130,16 +130,16 @@ export default function Dashboard() {
 
       {/* Barra de uso global del inventario */}
       {!cargando && unidadesTotales > 0 && (
-        <div className={`${tarjeta} anim-slide-up mt-4 px-5 py-4`} style={{ animationDelay: '300ms' }}>
-          <div className="mb-2 flex items-center justify-between text-sm">
+        <div className={`${tarjeta} anim-slide-up mt-4 px-5 py-4`} style={{ animationDelay: '340ms' }}>
+          <div className="mb-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
             <span className="font-medium text-slate-300">Uso del inventario</span>
             <span className="text-slate-400">
-              <b className="text-slate-200">{unidadesPrestadas}</b> de {unidadesTotales} unidades prestadas ({porcentajeUso}%)
+              <b className="text-slate-100">{unidadesPrestadas}</b> de {unidadesTotales} unidades prestadas ({porcentajeUso}%)
             </span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-slate-800">
+          <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
             <div
-              className="anim-grow-bar h-full rounded-full bg-linear-to-r from-emerald-400 to-sky-400"
+              className="anim-grow-bar h-full rounded-full bg-linear-to-r from-emerald-400 via-teal-400 to-sky-400 shadow-[0_0_14px_rgba(52,211,153,0.6)]"
               style={{ width: `${porcentajeUso}%` }}
             />
           </div>

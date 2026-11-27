@@ -4,41 +4,49 @@ import { btnPeligro, btnPrimario, btnSecundario } from './estilos'
 
 // Ventana de confirmación ("¿Seguro que quieres eliminar?")
 export default function ConfirmDialog({
-    titulo,
-    children,
-    textoConfirmar = 'Confirmar',
-    peligro = false,
-    cargando = false,
-    onConfirmar,
-    onCancelar,
+  titulo,
+  children,
+  textoConfirmar = 'Confirmar',
+  peligro = false,
+  cargando = false,
+  onConfirmar,
+  onCancelar,
 }) {
-    return (
-        <Modal titulo={titulo} onCerrar={onCancelar} ancho="max-w-md" bloquear={cargando}>
-            <div className="space-y-4 px-6 py-5">
-                <div className="flex gap-3">
-                    <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${peligro ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-400'
-                            }`}
-                    >
-                        <TriangleAlert size={20} />
-                    </div>
-                    <div className="space-y-2 text-sm text-slate-300">{children}</div>
-                </div>
-                <div className="flex justify-end gap-2 pt-1">
-                    <button type="button" onClick={onCancelar} disabled={cargando} className={btnSecundario}>
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onConfirmar}
-                        disabled={cargando}
-                        className={peligro ? btnPeligro : btnPrimario}
-                    >
-                        {cargando && <LoaderCircle size={16} className="animate-spin" />}
-                        {textoConfirmar}
-                    </button>
-                </div>
-            </div>
-        </Modal>
-    )
+  return (
+    <Modal
+      titulo={titulo}
+      onCerrar={onCancelar}
+      ancho="sm"
+      bloquear={cargando}
+      pie={
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onCancelar} disabled={cargando} className={btnSecundario}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirmar}
+            disabled={cargando}
+            className={peligro ? btnPeligro : btnPrimario}
+          >
+            {cargando && <LoaderCircle size={16} className="animate-spin" />}
+            {textoConfirmar}
+          </button>
+        </div>
+      }
+    >
+      <div className="flex gap-4 px-6 py-6">
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+            peligro
+              ? 'bg-linear-to-br from-red-500/25 to-orange-500/15 text-red-300'
+              : 'bg-linear-to-br from-amber-500/25 to-yellow-500/15 text-amber-300'
+          }`}
+        >
+          <TriangleAlert size={22} />
+        </div>
+        <div className="min-w-0 space-y-2 text-sm leading-relaxed text-slate-300">{children}</div>
+      </div>
+    </Modal>
+  )
 }

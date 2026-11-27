@@ -15,14 +15,12 @@ body {
   color: #f1f5f9;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-/* Fondo con resplandores suaves */
-.fondo-aurora {
-  background:
-    radial-gradient(60rem 30rem at 12% -10%, rgba(16, 185, 129, 0.16), transparent 60%),
-    radial-gradient(50rem 28rem at 95% 0%, rgba(14, 165, 233, 0.12), transparent 60%),
-    #020617;
+::selection {
+  background: rgba(52, 211, 153, 0.35);
+  color: #fff;
 }
 
 /* Controles nativos en modo oscuro */
@@ -30,59 +28,169 @@ input,
 select {
   color-scheme: dark;
 }
-select option {
-  background-color: #0f172a;
-  color: #f1f5f9;
+
+/* ---------- Animaciones (keyframes) ---------- */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.95) translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: none; } }
+@keyframes toast-in { from { opacity: 0; transform: translateX(30px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes grow-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes drift-1 { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(9rem, 6rem, 0) scale(1.2); } }
+@keyframes drift-2 { from { transform: translate3d(0, 0, 0) scale(1.1); } to { transform: translate3d(-8rem, 9rem, 0) scale(0.9); } }
+@keyframes drift-3 { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-6rem, -7rem, 0) scale(1.25); } }
+
+@layer components {
+  /* "backwards": al terminar la animación no queda ninguna transformación activa */
+  .anim-fade-in { animation: fade-in 0.3s ease-out backwards; }
+  .anim-slide-up { animation: slide-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  .anim-pop-in { animation: pop-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  .anim-toast-in { animation: toast-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  .anim-float { animation: float 7s ease-in-out infinite; }
+  .anim-grow-bar { transform-origin: left; animation: grow-bar 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  /* En celular las ventanas suben desde abajo; en pantallas grandes aparecen con zoom suave */
+  .anim-dialogo { animation: sheet-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+
+  /* ---------- Glassmorphism ---------- */
+  .vidrio {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.022));
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 12px 40px -16px rgba(0, 0, 0, 0.6);
+  }
+  .vidrio-fuerte {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.86), rgba(15, 23, 42, 0.94));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(28px) saturate(160%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px -20px rgba(0, 0, 0, 0.75);
+  }
+
+  /* Texto con degradado aurora */
+  .texto-aurora {
+    background: linear-gradient(90deg, #6ee7b7, #38bdf8 50%, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Degradado que aparece suavemente al pasar el mouse */
+  .hover-grad { position: relative; isolation: isolate; }
+  .hover-grad::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.24), rgba(14, 165, 233, 0.15));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .hover-grad:hover::before { opacity: 1; }
+
+  /* Brillo que cruza el botón al pasar el mouse */
+  .brillo { position: relative; overflow: hidden; }
+  .brillo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.7s ease;
+    pointer-events: none;
+  }
+  .brillo:hover::after { transform: translateX(120%); }
+
+  /* Tarjeta con foco de luz que sigue al mouse y borde degradado (solo con mouse) */
+  .tilt { position: relative; }
+  .tilt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s;
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(52, 211, 153, 0.2), rgba(56, 189, 248, 0.09) 40%, transparent 70%);
+  }
+  .tilt::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s;
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.65), rgba(56, 189, 248, 0.4) 50%, rgba(167, 139, 250, 0.6));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  .tilt:hover::before,
+  .tilt:hover::after { opacity: 1; }
+
+  /* Esqueleto de carga */
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* ---------- Fondo aurora ---------- */
+  .aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #020617; }
+  .aurora-blob { position: absolute; border-radius: 9999px; filter: blur(90px); will-change: transform; }
+  .aurora-1 { width: 46rem; height: 46rem; left: -14rem; top: -16rem; opacity: 0.5; background: radial-gradient(circle, #10b981, transparent 65%); animation: drift-1 28s ease-in-out infinite alternate; }
+  .aurora-2 { width: 42rem; height: 42rem; right: -16rem; top: -8rem; opacity: 0.42; background: radial-gradient(circle, #0ea5e9, transparent 65%); animation: drift-2 34s ease-in-out infinite alternate; }
+  .aurora-3 { width: 46rem; height: 46rem; left: 28%; bottom: -24rem; opacity: 0.32; background: radial-gradient(circle, #7c3aed, transparent 65%); animation: drift-3 40s ease-in-out infinite alternate; }
+  .aurora::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 15%, transparent 72%);
+    mask-image: radial-gradient(ellipse at 50% 0%, #000 15%, transparent 72%);
+  }
+
+  /* Escena 3D de la bienvenida */
+  .escena-3d {
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx, 6deg)) rotateY(var(--ry, -14deg));
+    transition: transform 0.35s ease-out;
+  }
 }
 
-/* ---------- Animaciones ---------- */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes pop-in {
-  from { opacity: 0; transform: scale(0.95) translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(28px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-@keyframes grow-bar {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+/* Efectos de inclinación 3D solo en equipos con mouse */
+@media (hover: hover) and (pointer: fine) {
+  @layer components {
+    .tilt {
+      transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, border-color 0.3s;
+    }
+    .tilt:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 28px 60px -22px rgba(16, 185, 129, 0.4); }
+  }
 }
 
-.anim-fade-in { animation: fade-in 0.3s ease-out both; }
-.anim-slide-up { animation: slide-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.anim-pop-in { animation: pop-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.anim-toast-in { animation: toast-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.anim-float { animation: float 7s ease-in-out infinite; }
-.anim-grow-bar { transform-origin: left; animation: grow-bar 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (min-width: 640px) {
+  @layer components {
+    .anim-dialogo { animation-name: pop-in; animation-duration: 0.25s; }
+  }
+}
 
-/* Esqueleto de carga */
-.skeleton {
-  background: linear-gradient(90deg, #0f172a 25%, #1e293b 50%, #0f172a 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
+@media (max-width: 640px) {
+  @layer components {
+    .aurora-blob { filter: blur(60px); }
+  }
 }
 
 /* Barras de desplazamiento discretas */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #334155; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.22); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.4); }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* Respeta a quien desactiva las animaciones en su sistema */

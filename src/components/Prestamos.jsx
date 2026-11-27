@@ -18,6 +18,16 @@ import FotoEquipo from './ui/FotoEquipo'
 import Paginador from './ui/Paginador'
 import { btnIcono, btnPrimario, entrada, tarjeta } from './ui/estilos'
 
+const ESTADOS_FILTRO = ['Todos', 'Pendiente', 'Devuelto']
+
+function Avatar({ nombre }) {
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-emerald-500/40 via-sky-500/30 to-violet-500/40 text-xs font-bold text-white ring-1 ring-white/15">
+      {iniciales(nombre)}
+    </div>
+  )
+}
+
 export default function Prestamos({ notificar }) {
   const [prestamos, setPrestamos] = useState([])
   const [equipos, setEquipos] = useState([])
@@ -137,11 +147,42 @@ export default function Prestamos({ notificar }) {
     setPrestamoAEliminar(null)
   }
 
+  // Botones de acción (se usan en la tabla y en las tarjetas de celular)
+  function acciones(p) {
+    return (
+      <>
+        {p.estado === 'Pendiente' && (
+          <button
+            type="button"
+            onClick={() => devolver(p)}
+            disabled={devolviendoId === p.id}
+            className="brillo mr-1 inline-flex items-center gap-1.5 rounded-xl bg-linear-to-r from-emerald-500/25 to-sky-500/20 px-3 py-2 text-xs font-semibold text-emerald-200 ring-1 ring-inset ring-emerald-400/30 transition hover:from-emerald-500/40 hover:to-sky-500/30 disabled:opacity-50"
+          >
+            <Undo2 size={14} />
+            {devolviendoId === p.id ? 'Devolviendo…' : 'Devolver'}
+          </button>
+        )}
+        <button type="button" onClick={() => abrirEdicion(p)} className={btnIcono} aria-label={`Corregir préstamo de ${p.estudiante}`} title="Corregir datos">
+          <Pencil size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setPrestamoAEliminar(p)}
+          className={`${btnIcono} hover:!text-red-300`}
+          aria-label={`Eliminar préstamo de ${p.estudiante}`}
+          title="Eliminar"
+        >
+          <Trash2 size={16} />
+        </button>
+      </>
+    )
+  }
+
   return (
     <section>
-      {/* Barra de herramientas */}
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-60 flex-1">
+      {/* Barra de herramientas (al cambiar de página se sube hasta aquí) */}
+      <div id="lista-prestamos" className="mb-6 grid scroll-mt-28 gap-3 lg:flex lg:flex-wrap lg:items-center">
+        <div className="relative lg:min-w-64 lg:flex-1">
           <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
             className={entrada(false, { relleno: 'pl-10 pr-3.5' })}
@@ -153,20 +194,22 @@ export default function Prestamos({ notificar }) {
         </div>
 
         {/* Filtro por estado con contador */}
-        <div className="flex rounded-xl border border-slate-700 bg-slate-800/60 p-1">
-          {['Todos', 'Pendiente', 'Devuelto'].map((estado) => (
+        <div className="vidrio flex overflow-x-auto rounded-xl p-1">
+          {ESTADOS_FILTRO.map((estado) => (
             <button
               key={estado}
               type="button"
               onClick={() => setFiltroEstado(estado)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                filtroEstado === estado ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
+              className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+                filtroEstado === estado
+                  ? 'bg-linear-to-br from-emerald-400 to-sky-500 text-white shadow-lg shadow-emerald-500/30'
+                  : 'text-slate-400 hover:bg-linear-to-r hover:from-emerald-500/10 hover:to-sky-500/10 hover:text-white'
               }`}
             >
               {estado}
               <span
                 className={`rounded-full px-1.5 text-xs ${
-                  filtroEstado === estado ? 'bg-white/20' : 'bg-slate-700 text-slate-300'
+                  filtroEstado === estado ? 'bg-white/25' : 'bg-white/10 text-slate-300'
                 }`}
               >
                 {conteo[estado]}
@@ -191,9 +234,9 @@ export default function Prestamos({ notificar }) {
 
       {/* Sin resultados */}
       {!cargando && filtrados.length === 0 && (
-        <div className={`${tarjeta} anim-fade-in flex flex-col items-center px-6 py-14 text-center`}>
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-slate-400">
-            <ClipboardList size={28} />
+        <div className={`${tarjeta} anim-fade-in flex flex-col items-center px-6 py-16 text-center`}>
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 text-slate-400">
+            <ClipboardList size={30} />
           </div>
           <h3 className="text-lg font-semibold text-white">
             {prestamos.length === 0 ? 'Aún no hay préstamos' : 'Sin resultados'}
@@ -211,11 +254,11 @@ export default function Prestamos({ notificar }) {
         </div>
       )}
 
-      {/* Tabla */}
+      {/* Tabla (pantallas medianas y grandes) */}
       {!cargando && filtrados.length > 0 && (
-        <div className={`${tarjeta} anim-fade-in overflow-x-auto`}>
+        <div className={`${tarjeta} anim-fade-in hidden overflow-x-auto md:block`}>
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-800 text-xs uppercase tracking-wider text-slate-500">
+            <thead className="border-b border-white/10 text-xs uppercase tracking-wider text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-semibold">Estudiante</th>
                 <th className="px-4 py-3 font-semibold">CI</th>
@@ -232,26 +275,19 @@ export default function Prestamos({ notificar }) {
                 return (
                   <tr
                     key={p.id}
-                    className="anim-fade-in border-t border-slate-800/70 transition hover:bg-slate-800/30"
+                    className="anim-fade-in border-t border-white/5 transition hover:bg-linear-to-r hover:from-emerald-500/10 hover:via-transparent hover:to-sky-500/10"
                     style={{ animationDelay: `${i * 25}ms` }}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-slate-700 to-slate-800 text-xs font-bold text-slate-200">
-                          {iniciales(p.estudiante)}
-                        </div>
+                        <Avatar nombre={p.estudiante} />
                         <span className="font-medium text-white">{p.estudiante}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-slate-400">{p.codigoEstudiante}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <FotoEquipo
-                          equipo={equiposPorId[p.equipoId]}
-                          ancho={100}
-                          iconSize={16}
-                          className="h-9 w-9 shrink-0 rounded-lg"
-                        />
+                        <FotoEquipo equipo={equiposPorId[p.equipoId]} ancho={100} iconSize={16} className="h-9 w-9 shrink-0 rounded-lg" />
                         <span className="text-slate-200">{p.equipoNombre}</span>
                       </div>
                     </td>
@@ -266,29 +302,7 @@ export default function Prestamos({ notificar }) {
                       <EstadoBadge estado={p.estado} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      {p.estado === 'Pendiente' && (
-                        <button
-                          type="button"
-                          onClick={() => devolver(p)}
-                          disabled={devolviendoId === p.id}
-                          className="mr-1 inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/25 disabled:opacity-50"
-                        >
-                          <Undo2 size={14} />
-                          {devolviendoId === p.id ? 'Devolviendo…' : 'Devolver'}
-                        </button>
-                      )}
-                      <button type="button" onClick={() => abrirEdicion(p)} className={btnIcono} aria-label={`Corregir préstamo de ${p.estudiante}`} title="Corregir datos">
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPrestamoAEliminar(p)}
-                        className={`${btnIcono} hover:bg-red-500/10 hover:text-red-400`}
-                        aria-label={`Eliminar préstamo de ${p.estudiante}`}
-                        title="Eliminar"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {acciones(p)}
                     </td>
                   </tr>
                 )
@@ -298,7 +312,44 @@ export default function Prestamos({ notificar }) {
         </div>
       )}
 
-      {!cargando && <Paginador paginacion={paginacion} nombre="préstamos" />}
+      {/* Tarjetas (celular) */}
+      {!cargando && filtrados.length > 0 && (
+        <div className="space-y-3 md:hidden">
+          {paginacion.items.map((p, i) => {
+            const atrasado = p.estado === 'Pendiente' && diasDesde(p.fechaPrestamo) >= 7
+            return (
+              <div
+                key={p.id}
+                className={`${tarjeta} anim-slide-up p-4`}
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
+                <div className="flex items-start gap-3">
+                  <Avatar nombre={p.estudiante} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-white">{p.estudiante}</p>
+                    <p className="font-mono text-xs text-slate-500">CI {p.codigoEstudiante}</p>
+                  </div>
+                  <EstadoBadge estado={p.estado} />
+                </div>
+                <div className="mt-3 flex items-center gap-3 rounded-xl bg-white/[0.04] p-2.5">
+                  <FotoEquipo equipo={equiposPorId[p.equipoId]} ancho={100} iconSize={16} className="h-10 w-10 shrink-0 rounded-lg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-100">{p.equipoNombre}</p>
+                    <p className={`text-xs ${atrasado ? 'text-amber-400' : 'text-slate-500'}`}>
+                      × {p.cantidad} · {tiempoRelativo(p.fechaPrestamo)}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-end gap-1">
+                  {acciones(p)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {!cargando && <Paginador paginacion={paginacion} nombre="préstamos" anclaId="lista-prestamos" />}
 
       {/* Modal de crear / corregir */}
       {modalAbierto && (

@@ -12,6 +12,9 @@ import Campo from './ui/Campo'
 import FotoEquipo from './ui/FotoEquipo'
 import { btnPrimario, btnSecundario, entrada } from './ui/estilos'
 
+const botonCantidad =
+  'hover-grad rounded-xl border border-white/10 bg-white/5 px-3 text-slate-300 transition hover:border-emerald-400/40 hover:text-white'
+
 // Sirve para dos casos:
 // - Crear: "prestamo" es null y se elige equipo y cantidad.
 // - Editar: "prestamo" trae datos y solo se corrigen los del estudiante.
@@ -97,7 +100,7 @@ export default function PrestamoModal({
       bloquear={guardando}
       ancho="max-w-xl"
     >
-      <form onSubmit={enviar} className="space-y-5 px-6 py-5" noValidate>
+      <form onSubmit={enviar} className="space-y-5 px-6 pb-0 pt-5" noValidate>
         <div className="grid gap-5 sm:grid-cols-2">
           <Campo id="pr-estudiante" etiqueta="Nombre completo del estudiante" error={errores.estudiante}>
             <input
@@ -124,7 +127,7 @@ export default function PrestamoModal({
         </div>
 
         {editando ? (
-          <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-800/30 p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
             <FotoEquipo equipo={equipoActual} ancho={120} iconSize={20} className="h-12 w-12 shrink-0 rounded-lg" />
             <div className="min-w-0">
               <p className="truncate font-medium text-white">{prestamo.equipoNombre}</p>
@@ -139,8 +142,8 @@ export default function PrestamoModal({
                   No hay equipos disponibles para prestar.
                 </p>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-800/30">
-                  <div className="relative border-b border-slate-700">
+                <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
+                  <div className="relative border-b border-white/10">
                     <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                     <input
                       id="pr-buscar"
@@ -150,7 +153,7 @@ export default function PrestamoModal({
                       onChange={(e) => setBusquedaEquipo(e.target.value)}
                     />
                   </div>
-                  <ul className="max-h-52 divide-y divide-slate-800/70 overflow-y-auto" role="listbox" aria-label="Equipos disponibles">
+                  <ul className="max-h-52 divide-y divide-white/5 overflow-y-auto" role="listbox" aria-label="Equipos disponibles">
                     {opciones.length === 0 && (
                       <li className="px-4 py-4 text-center text-sm text-slate-500">Sin coincidencias.</li>
                     )}
@@ -164,7 +167,9 @@ export default function PrestamoModal({
                             aria-selected={activo}
                             onClick={() => elegirEquipo(eq.id)}
                             className={`flex w-full items-center gap-3 px-3 py-2 text-left transition ${
-                              activo ? 'bg-emerald-500/15' : 'hover:bg-slate-800/60'
+                              activo
+                                ? 'bg-linear-to-r from-emerald-500/25 via-teal-500/10 to-transparent'
+                                : 'hover:bg-linear-to-r hover:from-emerald-500/10 hover:to-sky-500/5'
                             }`}
                           >
                             <FotoEquipo equipo={eq} ancho={100} iconSize={16} className="h-9 w-9 shrink-0 rounded-lg" />
@@ -174,7 +179,7 @@ export default function PrestamoModal({
                               </p>
                               <p className="font-mono text-xs text-slate-500">{eq.codigo}</p>
                             </div>
-                            <span className="shrink-0 rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-300">
+                            <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs text-slate-200">
                               {eq.stockDisponible} disp.
                             </span>
                           </button>
@@ -193,12 +198,7 @@ export default function PrestamoModal({
               ayuda={equipoElegido ? `Máximo disponible: ${equipoElegido.stockDisponible}` : undefined}
             >
               <div className="flex max-w-48 items-stretch gap-2">
-                <button
-                  type="button"
-                  onClick={() => ajustarCantidad(-1)}
-                  aria-label="Restar una unidad"
-                  className="rounded-xl border border-slate-700 bg-slate-800/60 px-3 text-slate-300 transition hover:bg-slate-800"
-                >
+                <button type="button" onClick={() => ajustarCantidad(-1)} aria-label="Restar una unidad" className={botonCantidad}>
                   <Minus size={16} />
                 </button>
                 <input
@@ -211,12 +211,7 @@ export default function PrestamoModal({
                   value={form.cantidad}
                   onChange={(e) => cambiar('cantidad', e.target.value)}
                 />
-                <button
-                  type="button"
-                  onClick={() => ajustarCantidad(1)}
-                  aria-label="Sumar una unidad"
-                  className="rounded-xl border border-slate-700 bg-slate-800/60 px-3 text-slate-300 transition hover:bg-slate-800"
-                >
+                <button type="button" onClick={() => ajustarCantidad(1)} aria-label="Sumar una unidad" className={botonCantidad}>
                   <Plus size={16} />
                 </button>
               </div>
@@ -230,7 +225,8 @@ export default function PrestamoModal({
           </p>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-800 pt-4">
+        {/* Barra de acciones: siempre visible al final de la ventana */}
+        <div className="sticky bottom-0 -mx-6 flex justify-end gap-2 border-t border-white/10 bg-slate-900/90 px-6 py-4 backdrop-blur">
           <button type="button" onClick={onCerrar} disabled={guardando} className={btnSecundario}>
             Cancelar
           </button>
